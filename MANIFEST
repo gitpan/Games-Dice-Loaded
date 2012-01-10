@@ -1,0 +1,11 @@
+Changes
+LICENSE
+MANIFEST
+META.yml
+Makefile.PL
+README
+README.md
+dist.ini
+lib/Games/Dice/Loaded.pm
+t/01-sanity.t
+t/02-scale.t
