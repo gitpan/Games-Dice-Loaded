@@ -22,11 +22,18 @@ my %WriteMakefileArgs = (
   "LICENSE" => "perl",
   "NAME" => "Games::Dice::Loaded",
   "PREREQ_PM" => {
+    "AutoLoader" => 0,
     "Carp" => 0,
+    "Exporter" => 0,
+    "List::MoreUtils" => 0,
     "List::Util" => 0,
-    "Moose" => "2.0300"
+    "Moose" => "2.0300",
+    "Statistics::Distributions" => "1.02",
+    "Test::More" => 0,
+    "strict" => 0,
+    "warnings" => 0
   },
-  "VERSION" => "0.001_01",
+  "VERSION" => "0.001",
   "test" => {
     "TESTS" => "t/*.t"
   }

@@ -1,19 +1,18 @@
 package Games::Dice::Loaded;
 {
-  $Games::Dice::Loaded::VERSION = '0.001_01';
+  $Games::Dice::Loaded::VERSION = '0.001';
 }
 use Moose 2.0300;
 use List::Util qw/max sum/;
-use Carp;
 
 # ABSTRACT: Perl extension to simulate rolling loaded dice
 
 # Keith Schwarz's article is lovely and has lots of pretty diagrams and proofs,
 # but unfortunately it's also very long. Here's the tl;dr:
 
-# Draw a bar chart of the probabilities of landing on the various sides, then
+# Draw a bar chart of the probabilities of landing on the various faces, then
 # throw darts at it (by picking X and Y coordinates uniformly at random). If
-# you hit a bar with your dart, choose that side. This works OK, but has very
+# you hit a bar with your dart, choose that face. This works OK, but has very
 # bad worst-case behaviour; fortunately, it's possible to cut up the taller
 # bars and stack them on top of the shorter bars in such a way that the area
 # covered is exactly a (1/n) \* n rectangle. Constructing this rectangular
@@ -25,15 +24,15 @@ use Carp;
 # short bars or the list of long bars, depending on how long it now is.
 
 # Once we've done this, simulating a dice roll can be done in O(1) time:
-# Generate the dart's coordinates; which vertical slice
-# did the dart land in, and is it in the shorter bar on the bottom or the
-# "alias" that's been stacked above it?.
+# Generate the dart's coordinates; which vertical slice did the dart land in,
+# and is it in the shorter bar on the bottom or the "alias" that's been stacked
+# above it?
 
 # Heights of the lower halves of the strips
 has 'dartboard' => ( is => 'ro', isa => 'ArrayRef' );
 # Identities of the upper halves of the strips
 has 'aliases' => ( is => 'ro', isa => 'ArrayRef' );
-has 'num_sides' => ( is => 'ro', isa => 'Num' );
+has 'num_faces' => ( is => 'ro', isa => 'Num' );
 
 # Construct the dartboard and alias table
 around BUILDARGS => sub {
@@ -64,34 +63,36 @@ around BUILDARGS => sub {
 		$dartboard[$unused->[0]] = 1;
 		$aliases[$unused->[0]] = $unused->[0];
 	}
-	for my $side (0 .. $n - 1) {
-		my $d = $dartboard[$side];
-		croak("Undefined dartboard for side $side") unless defined $d;
-		croak("Height $d too large for side $side") unless $d <= 1;
-		croak("Height $d too small for side $side") unless $d >= 0;
+	for my $face (0 .. $n - 1) {
+		my $d = $dartboard[$face];
+		die("Undefined dartboard for face $face") unless defined $d;
+		die("Height $d too large for face $face") unless $d <= 1;
+		die("Height $d too small for face $face") unless $d >= 0;
 	}
 	return $class->$orig(
 		dartboard => \@dartboard,
 		aliases => \@aliases,
-		num_sides => $n,
+		num_faces => $n,
 	);
 };
 
 # Roll the die
 sub roll {
 	my ($self) = @_;
-	my $side = int(rand $self->num_sides);
+	my $face = int(rand $self->num_faces);
 	my $height = rand 1;
 	my @dartboard = @{$self->dartboard()};
-	croak("Dartboard undefined for side $side")
-		unless defined $dartboard[$side];
-	if ($height > $dartboard[$side]) {
+	die("Dartboard undefined for face $face")
+		unless defined $dartboard[$face];
+	if ($height > $dartboard[$face]) {
 		my @aliases = @{$self->aliases};
-		return $aliases[$side] + 1;
+		return $aliases[$face] + 1;
 	} else {
-		return $side + 1;
+		return $face + 1;
 	}
 }
+
+*sample = \&roll;
 
 1;
 
@@ -114,10 +115,10 @@ Games::Dice::Loaded - Simulate rolling loaded dice
 =head1 DESCRIPTION
 
 C<Games::Dice::Loaded> allows you to simulate rolling arbitrarily-weighted dice
-with arbitrary numbers of sides - or, more formally, to model any discrete
-random variable which may take only finitely many values. It does this using
-Vose's elegant I<alias method>, which is described in Keith Schwarz's article
-L<Darts, Dice, and Coins: Sampling from a Discrete
+with arbitrary numbers of faces - or, more formally, to sample any discrete
+probability distribution which may take only finitely many values. It does this
+using Vose's elegant I<alias method>, which is described in Keith Schwarz's
+article L<Darts, Dice, and Coins: Sampling from a Discrete
 Distribution|http://www.keithschwarz.com/darts-dice-coins/>.
 
 =head1 METHODS
@@ -126,17 +127,23 @@ Distribution|http://www.keithschwarz.com/darts-dice-coins/>.
 
 =item new()
 
-Constructor. Takes as arguments the probabilities of rolling each "side". If
+Constructor. Takes as arguments the probabilities of rolling each "face". If
 the weights given do not sum to 1, they are scaled so that they do. This method
-constructs the alias table, in O(num_sides) time.
+constructs the alias table, in O(num_faces) time.
 
 =item roll()
 
-Roll the die. Takes no arguments, returns a number in the range 1 .. num_sides. Takes O(1) time.
+Roll the die. Takes no arguments, returns a number in the range 1 .. num_faces.
+Takes O(1) time.
 
-=item num_sides()
+=item sample()
 
-The number of sides on the die. Read-only.
+Synonym for C<roll()>.
+
+=item num_faces()
+
+The number of faces on the die. More formally, the size of the discrete random
+variable's domain. Read-only.
 
 =back
 
@@ -172,7 +179,9 @@ Descriptions of the alias method:
 
 =over
 
-=item L<Darts, Dice, and Coins: Sampling from a Discrete
+=item Michael Vose, L<A Linear Algorithm For Generating Random Numbers with a Given Distribution|http://web.eecs.utk.edu/~vose/Publications/random.pdf>
+
+=item Keith Schwarz, L<Darts, Dice, and Coins: Sampling from a Discrete
 Distribution|http://www.keithschwarz.com/darts-dice-coins/>
 
 =item L<Data structure for loaded dice?|http://stackoverflow.com/questions/5027757/data-structure-for-loaded-dice> on StackOverflow
