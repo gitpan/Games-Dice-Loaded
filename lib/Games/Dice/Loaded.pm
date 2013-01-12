@@ -1,6 +1,6 @@
 package Games::Dice::Loaded;
 {
-  $Games::Dice::Loaded::VERSION = '0.001';
+  $Games::Dice::Loaded::VERSION = '0.002';
 }
 use Moose 2.0300;
 use List::Util qw/max sum/;
